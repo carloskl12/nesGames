@@ -110,14 +110,14 @@ L0062:	lda     _index
 L0063:	lda     #$FF
 	sta     $2007
 ;
-; PPU_ADDRESS = 0x21;  // establece una dirección en el PPU de 0x21ca
+; PPU_ADDRESS = 0x22;  // establece una dirección en el PPU de 0x21ca
 ;
-	lda     #$21
+	lda     #$22
 	sta     $2006
 ;
-; PPU_ADDRESS = 0xca;
+; PPU_ADDRESS = 0x1f;
 ;
-	lda     #$CA
+	lda     #$1F
 	sta     $2006
 ;
 ; for( index = 0; index < sizeof(TEXT); ++index ){

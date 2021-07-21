@@ -23,8 +23,5 @@ $(NAME).s: $(NAME).c $(DEPEN)
 	$(CC65) -Oi $(NAME).c --add-source
 
 clean:
-# if linux uncomment the next line
 	rm $(NAME).nes
-# windows
-#	del $(NAME).nes
 

@@ -58,8 +58,8 @@ void main (void) {
   //Carga el texto, dando un offset, 0x1c/2= fila
   //posx= 0x21ca & 0x1f = a = 10
   //posy= (0x21ca >> 5) & 0x1f= d =14
-  PPU_ADDRESS = 0x21;  // establece una dirección en el PPU de 0x21ca
-  PPU_ADDRESS = 0xca;
+  PPU_ADDRESS = 0x22;  // establece una dirección en el PPU de 0x21ca
+  PPU_ADDRESS = 0x1f;
   for( index = 0; index < sizeof(TEXT); ++index ){
     PPU_DATA = TEXT[index];
   }

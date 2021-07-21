@@ -29,6 +29,7 @@
 	.export		_Reset_Scroll
 	.export		_Load_Text
 	.export		_Change_Atrib_table
+	.export		_Ajusta_Pantalla
 	.export		_main
 
 .segment	"DATA"
@@ -45,7 +46,7 @@ _TEXT2:
 	.byte	$32,$32,$33,$33,$32,$32,$33,$33,$32,$32,$33,$33,$32,$32,$33,$33
 	.byte	$00
 _PALETTE:
-	.byte	$11
+	.byte	$0F
 	.byte	$02
 	.byte	$00
 	.byte	$02
@@ -54,7 +55,7 @@ _PALETTE:
 	.byte	$00
 	.byte	$16
 	.byte	$00
-	.byte	$27
+	.byte	$28
 	.byte	$00
 	.byte	$27
 	.byte	$00
@@ -163,9 +164,9 @@ _state:
 ; for( index = 0; index < sizeof(PALETTE); ++index ){
 ;
 	sta     _index
-L011C:	lda     _index
+L0130:	lda     _index
 	cmp     #$10
-	bcs     L011D
+	bcs     L0131
 ;
 ; PPU_DATA = PALETTE[index];
 ;
@@ -176,11 +177,11 @@ L011C:	lda     _index
 ; for( index = 0; index < sizeof(PALETTE); ++index ){
 ;
 	inc     _index
-	jmp     L011C
+	jmp     L0130
 ;
 ; PPU_ADDRESS = 0x23;
 ;
-L011D:	lda     #$23
+L0131:	lda     #$23
 	sta     $2006
 ;
 ; PPU_ADDRESS = 0xda;
@@ -192,7 +193,7 @@ L011D:	lda     #$23
 ;
 	lda     #$00
 	sta     _index
-L011E:	lda     _index
+L0132:	lda     _index
 	cmp     #$04
 	bcs     L0045
 ;
@@ -205,7 +206,7 @@ L011E:	lda     _index
 ; for( index = 0; index < sizeof(Attrib_Table); ++index ){
 ;
 	inc     _index
-	jmp     L011E
+	jmp     L0132
 ;
 ; }
 ;
@@ -258,18 +259,20 @@ L0045:	rts
 .segment	"CODE"
 
 ;
-; if (Text_Position < sizeof(TEXT)){
+; if (Text_Position < Text_dim){
 ;
+	ldx     #$00
 	lda     _Text_Position
-	cmp     #$11
-	bcs     L011F
+	cmp     _Text_dim
+	txa
+	bcs     L013B
 ;
 ; PPU_ADDRESS = 0x21;
 ;
 	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0x88 + Text_Position; // one line down = add 0x20 to the low bit
+; PPU_ADDRESS = 0x88 + Text_Position; //  one line down = add 0x20 to the low bit
 ;
 	lda     _Text_Position
 	clc
@@ -287,7 +290,7 @@ L0045:	rts
 	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0xa8 + Text_Position; // one line down = add 0x20 to the low bit
+; PPU_ADDRESS = 0xa8 + Text_Position; //  one line down = add 0x20 to the low bit
 ;
 	lda     _Text_Position
 	clc
@@ -305,7 +308,7 @@ L0045:	rts
 	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0xc8 + Text_Position; // about the middle of the screen 21d0
+; PPU_ADDRESS = 0xc8 + Text_Position; //  about the middle of the screen 21d0
 ;
 	lda     _Text_Position
 	clc
@@ -323,7 +326,7 @@ L0045:	rts
 	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0xe8 + Text_Position; // one line down = add 0x20 to the low bit
+; PPU_ADDRESS = 0xe8 + Text_Position; //  one line down = add 0x20 to the low bit
 ;
 	lda     _Text_Position
 	clc
@@ -336,7 +339,7 @@ L0045:	rts
 	lda     _TEXT2,y
 	sta     $2007
 ;
-; ++Text_Position; 
+; ++Text_Position;  
 ;
 	inc     _Text_Position
 ;
@@ -346,31 +349,28 @@ L0045:	rts
 ;
 ; Text_Position = 0;
 ;
-L011F:	lda     #$00
-	sta     _Text_Position
+L013B:	sta     _Text_Position
 ;
 ; PPU_ADDRESS = 0x21;
 ;
 	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0x88; // one line down = add 0x20 to the low bit
+; PPU_ADDRESS = 0x88; //  una linea abajo = sumar 0x20 a los bits mas bajos
 ;
 	lda     #$88
 	sta     $2006
 ;
 ; for ( index = 0; index < Text_dim; ++index ){
 ;
-	lda     #$00
-	sta     _index
-	tax
-L0120:	lda     _index
+	stx     _index
+L0134:	lda     _index
 	cmp     _Text_dim
 	txa
 	sbc     #$00
-	bcs     L0121
+	bcs     L0135
 ;
-; PPU_DATA = 32; // clear the text by putting tile #32 in its place
+; PPU_DATA = 32;  //  borra el texto con el tile #32 
 ;
 	lda     #$20
 	sta     $2007
@@ -378,14 +378,14 @@ L0120:	lda     _index
 ; for ( index = 0; index < Text_dim; ++index ){
 ;
 	inc     _index
-	jmp     L0120
+	jmp     L0134
 ;
 ; PPU_ADDRESS = 0x21;
 ;
-L0121:	lda     #$21
+L0135:	lda     #$21
 	sta     $2006
 ;
-; PPU_ADDRESS = 0xa8; // one line down = add 0x20 to the low bit
+; PPU_ADDRESS = 0xa8; //  una linea abajo = sumar 0x20 a los bits mas bajos
 ;
 	lda     #$A8
 	sta     $2006
@@ -394,13 +394,13 @@ L0121:	lda     #$21
 ;
 	lda     #$00
 	sta     _index
-L0122:	lda     _index
+L0136:	lda     _index
 	cmp     _Text_dim
 	txa
 	sbc     #$00
-	bcs     L0123
+	bcs     L0137
 ;
-; PPU_DATA = 32; // clear the text by putting tile #32 in its place
+; PPU_DATA = 32;  //  borra el texto con el tile #32 
 ;
 	lda     #$20
 	sta     $2007
@@ -408,11 +408,11 @@ L0122:	lda     _index
 ; for ( index = 0; index < Text_dim; ++index ){
 ;
 	inc     _index
-	jmp     L0122
+	jmp     L0136
 ;
 ; PPU_ADDRESS = 0x21;
 ;
-L0123:	lda     #$21
+L0137:	lda     #$21
 	sta     $2006
 ;
 ; PPU_ADDRESS = 0xc8;
@@ -424,13 +424,13 @@ L0123:	lda     #$21
 ;
 	lda     #$00
 	sta     _index
-L0124:	lda     _index
+L0138:	lda     _index
 	cmp     _Text_dim
 	txa
 	sbc     #$00
-	bcs     L0125
+	bcs     L0139
 ;
-; PPU_DATA = 32; // clear the text by putting tile #32 in its place
+; PPU_DATA = 32;  //  borra el texto con el tile #32 
 ;
 	lda     #$20
 	sta     $2007
@@ -438,11 +438,11 @@ L0124:	lda     _index
 ; for ( index = 0; index < Text_dim; ++index ){
 ;
 	inc     _index
-	jmp     L0124
+	jmp     L0138
 ;
 ; PPU_ADDRESS = 0x21;
 ;
-L0125:	lda     #$21
+L0139:	lda     #$21
 	sta     $2006
 ;
 ; PPU_ADDRESS = 0xe8;
@@ -454,13 +454,13 @@ L0125:	lda     #$21
 ;
 	lda     #$00
 	sta     _index
-L0126:	lda     _index
+L013A:	lda     _index
 	cmp     _Text_dim
 	txa
 	sbc     #$00
-	bcs     L0100
+	bcs     L00FF
 ;
-; PPU_DATA = 32; // clear the text by putting tile #32 in its place
+; PPU_DATA = 32;  //  borra el texto con el tile #32 
 ;
 	lda     #$20
 	sta     $2007
@@ -468,11 +468,11 @@ L0126:	lda     _index
 ; for ( index = 0; index < Text_dim; ++index ){
 ;
 	inc     _index
-	jmp     L0126
+	jmp     L013A
 ;
 ; }
 ;
-L0100:	rts
+L00FF:	rts
 
 .endproc
 
@@ -511,7 +511,7 @@ L0100:	rts
 ;
 	lda     _nPalette
 	cmp     #$04
-	bcc     L0117
+	bcc     L0116
 ;
 ; nPalette=0;
 ;
@@ -520,7 +520,57 @@ L0100:	rts
 ;
 ; }
 ;
-L0117:	rts
+L0116:	rts
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ Ajusta_Pantalla (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_Ajusta_Pantalla: near
+
+.segment	"CODE"
+
+;
+; PPU_ADDRESS = 0x21;
+;
+	lda     #$21
+	sta     $2006
+;
+; PPU_ADDRESS = 0x40;
+;
+	lda     #$40
+	sta     $2006
+;
+; for ( index = 0; index < 255; ++index ){
+;
+	lda     #$00
+	sta     _index
+L013C:	lda     _index
+	cmp     #$FF
+	bcs     L013D
+;
+; PPU_DATA = 32;  //  borra el texto con el tile #32 
+;
+	lda     #$20
+	sta     $2007
+;
+; for ( index = 0; index < 255; ++index ){
+;
+	inc     _index
+	jmp     L013C
+;
+; PPU_DATA = 32;
+;
+L013D:	lda     #$20
+	sta     $2007
+;
+; }
+;
+	rts
 
 .endproc
 
@@ -535,13 +585,17 @@ L0117:	rts
 .segment	"CODE"
 
 ;
-; All_Off();   // turn off screen
+; All_Off();     // Apaga la pantalla
 ;
 	jsr     _All_Off
 ;
 ; Load_Palette();
 ;
 	jsr     _Load_Palette
+;
+; Ajusta_Pantalla();
+;
+	jsr     _Ajusta_Pantalla
 ;
 ; Reset_Scroll();
 ;
@@ -560,30 +614,30 @@ L0117:	rts
 ;
 	sta     _nPalette
 ;
-; All_On();// turn on screen
+; All_On();//  Enciende la pantalla
 ;
 	jsr     _All_On
 ;
-; while (NMI_flag == 0); // wait till NMI
+; while (NMI_flag == 0);  //  esperar hasta la interrupción NMI
 ;
-L0127:	lda     _NMI_flag
-	beq     L0127
+L013F:	lda     _NMI_flag
+	beq     L013F
 ;
 ; NMI_flag = 0;
 ;
 	lda     #$00
 	sta     _NMI_flag
 ;
-; if (Frame_Count == 10){ // wait 30 frames = 0.5 seconds
+; if (Frame_Count == 10){ //  30 frames = 0.5 seconds
 ;
 	lda     _Frame_Count
 	cmp     #$0A
-	bne     L0127
+	bne     L013F
 ;
 ; if (state == 0){
 ;
 	lda     _state
-	bne     L0076
+	bne     L0077
 ;
 ; Load_Text();
 ;
@@ -591,27 +645,27 @@ L0127:	lda     _NMI_flag
 ;
 ; } else{
 ;
-	jmp     L0079
+	jmp     L007A
 ;
 ; Change_Atrib_table();
 ;
-L0076:	jsr     _Change_Atrib_table
+L0077:	jsr     _Change_Atrib_table
 ;
 ; ++state;
 ;
 	inc     _state
 ;
-; ++test; // dummy, just making sure this compiles into the BSS section 0x300
+; ++test;  //  dummy, just making sure this compiles into the BSS section 0x300
 ;
-L0079:	inc     _test
+L007A:	inc     _test
 ;
-; if (  Text_Position == sizeof(TEXT) && state == 0)//& test>= 
+; if (  Text_Position == Text_dim && state == 0)//& test>= 
 ;
-	lda     _Text_Position
-	cmp     #$11
-	bne     L012A
+	lda     _Text_dim
+	cmp     _Text_Position
+	bne     L0142
 	lda     _state
-	bne     L012A
+	bne     L0142
 ;
 ; state=1;
 ;
@@ -620,7 +674,7 @@ L0079:	inc     _test
 ;
 ; if (state>= 12){
 ;
-L012A:	lda     _state
+L0142:	lda     _state
 	cmp     #$0C
 	bcc     L0084
 ;
@@ -646,9 +700,9 @@ L0084:	jsr     _Reset_Scroll
 	lda     #$00
 	sta     _Frame_Count
 ;
-; while (1){   // infinite loop
+; while (1){     //  loop infinito
 ;
-	jmp     L0127
+	jmp     L013F
 
 .endproc
 

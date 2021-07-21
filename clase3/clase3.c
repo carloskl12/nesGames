@@ -35,7 +35,9 @@ const unsigned char TEXT[]={
 "0011001100110011"};
 const unsigned char TEXT2[]={
 "2233223322332233"};
-//No se cuenta el número cero al final del string
+// La dimensión de solo texto corresponde a 
+// el tamaño del array menos uno que es el byte 
+// 0 ubicado al final de la cadena.
 unsigned char Text_dim= sizeof(TEXT)-1;
 //  Una forma facil de tener codigo limpio es ubicar 
 //  el codigo de funciones en diferentes archivos
@@ -45,10 +47,11 @@ unsigned char Text_dim= sizeof(TEXT)-1;
 // Prototipos
 void Load_Text (void);
 void Change_Atrib_table(void);
-
+void Ajusta_Pantalla(void);
 void main (void) {
   All_Off();     // Apaga la pantalla
   Load_Palette();
+  Ajusta_Pantalla();
   Reset_Scroll();
   state=0;
   test=0;
@@ -67,7 +70,7 @@ void main (void) {
         ++state;
       }
       ++test;  //  dummy, just making sure this compiles into the BSS section 0x300
-      if (  Text_Position == sizeof(TEXT) && state == 0)//& test>= 
+      if (  Text_Position == Text_dim && state == 0)//& test>= 
         state=1;
       if (state>= 12){
           state=0;
@@ -84,7 +87,7 @@ void main (void) {
 // En cada V-blank, dentro del codigo de inicio, la rutina de NMI tendrá 
 // ++NMI_flag y ++Frame_Count
 void Load_Text (void) {
-  if (Text_Position < sizeof(TEXT)){
+  if (Text_Position < Text_dim){
 
     PPU_ADDRESS = 0x21;
     PPU_ADDRESS = 0x88 + Text_Position; //  one line down = add 0x20 to the low bit
@@ -138,4 +141,22 @@ void Change_Atrib_table(void){
   ++nPalette;
   if (nPalette>= sizeof(Attrib_Table))
     nPalette=0;
+}
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+void Ajusta_Pantalla(void){
+  /*
+  Agrega una franja con el color de fondo para mejorar
+  el aspecto de la zona donde estarán los cambios
+  
+  name table 0 desde 0x2000 hasta 0x23ff
+  */
+  PPU_ADDRESS = 0x21;
+  PPU_ADDRESS = 0x40;
+  for ( index = 0; index < 255; ++index ){
+      PPU_DATA = 32;  //  borra el texto con el tile #32 
+  }
+  //No se puede llegar a 255, por tanto
+  //se agrega el ultimo tile.
+  PPU_DATA = 32;
 }
